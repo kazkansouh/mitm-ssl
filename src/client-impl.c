@@ -28,13 +28,20 @@ struct SBioPair {
 };
 
 const char*    gpc_host = "localhost";
-uint16_t gui_port = 443;
+uint16_t       gui_port = 443;
+const Filter** gpf_filters = NULL;
+size_t         gs_filters = 0;
 
 STATIC
 void* biobind(void* c) {
   struct SBioPair *ps_pair = (struct SBioPair*)c;
   
   printf("processing request to bind bios\n");
+
+  void* p_ctx[gs_filters];
+  for (int i = 0; i < gs_filters; i++) {
+    p_ctx[i] = gpf_filters[i]->fNewCtx(gpf_filters[i]->pMode);
+  }
 
   int len = 0;
   do {
@@ -46,6 +53,9 @@ void* biobind(void* c) {
       printf("%s: writing: ", ps_pair->id);
       for (int i = 0; i < len; i++) {
         printf("%02X ", buff[i]);
+        for (int j = 0; j < gs_filters; j++) {
+          gpf_filters[j]->fUpdate(p_ctx[j], buff[i]);
+        }
       }
       printf("\n");
     }
@@ -54,6 +64,10 @@ void* biobind(void* c) {
   
   if (ps_pair->free) {
     ps_pair->free(ps_pair->b);
+  }
+
+  for (int i = 0; i < gs_filters; i++) {
+    gpf_filters[i]->fFreeCtx(p_ctx[i]);
   }
 
   pthread_exit(0);
@@ -187,8 +201,12 @@ void requestProxy(BIO* client) {
 
 
 fRequestProcessor getRequestHandler(const char* const pc_host, 
-                                    const uint16_t ui_port) {
+                                    const uint16_t ui_port,
+                                    const Filter** const pf_filters,
+                                    const size_t s_filters) {
   gpc_host = pc_host;
   gui_port = ui_port;
+  gpf_filters = pf_filters;
+  gs_filters = s_filters;
   return requestProxy;
 }

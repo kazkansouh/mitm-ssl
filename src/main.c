@@ -8,6 +8,7 @@
 #include "config.h"
 #include "server.h"
 #include "client-impl.h"
+#include "filter-string.h"
 
 #define IS_ARG(arg)                             \
   ((strncmp(arg, argv[i], strlen(arg)) == 0) && \
@@ -70,9 +71,20 @@ int main(int argc, char** argv) {
            s_args.pc_host,
            s_args.ui_rport,
            s_args.ui_lport);
+
+    const Filter* pf_filters[1] = {
+      filter_string_new_Filter("Basic")
+    };
+
     iret = runServer(s_args.ui_lport,
                      getRequestHandler(s_args.pc_host, 
-                                       s_args.ui_rport));
+                                       s_args.ui_rport,
+                                       pf_filters,
+                                       sizeof(pf_filters)/sizeof(Filter*)));
+
+    for (int i = 0; i < sizeof(pf_filters)/sizeof(Filter*); i++) {
+      pf_filters[i]->fFree((void*)pf_filters[i]);
+    }
   }
 
   return iret;
