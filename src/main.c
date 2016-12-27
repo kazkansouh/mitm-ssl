@@ -18,10 +18,12 @@ typedef struct {
   char* pc_host;
   uint16_t ui_rport;
   uint16_t ui_lport;
+  char* pc_certificate;
+  char* pc_key;
 } SArguments;
 
 void printUsage(int argc, char** argv) {
-  printf("usage: %s  --host=<hostname> [--rport=<port>] [--lport=<port>]\n",
+  printf("usage: %s  --host=<hostname> [--rport=<port>] [--lport=<port>] [--cert=<certificate>] [--key=<key>]\n",
          basename(argv[0]));
 }
 
@@ -49,6 +51,10 @@ bool validateArgs(int argc,
         return false;
       }
       s_args->ui_rport = port; 
+    } else if (IS_ARG("--cert=")) {
+      s_args->pc_certificate = argv[i] + strlen("--cert=");
+    } else if (IS_ARG("--key=")) {
+      s_args->pc_key = argv[i] + strlen("--key=");
     } else {
       fprintf(stderr, "Error, unknown argument: %s\n", argv[i]);
       return false;
@@ -61,7 +67,11 @@ int main(int argc, char** argv) {
   printf(PACKAGE_STRING "\n");
   int iret = 1;
 
-  SArguments s_args = { "localhost" , 4433 , 4443 };
+  SArguments s_args = { "localhost" ,
+                        4433 ,
+                        4443 ,
+                        "snakeoil/snakeoil.pem" ,
+                        "snakeoil/snakeoil.key" };
   if (!validateArgs(argc, argv, &s_args)) {
     printUsage(argc, argv);
   } else {
@@ -77,6 +87,8 @@ int main(int argc, char** argv) {
     };
 
     iret = runServer(s_args.ui_lport,
+                     s_args.pc_certificate,
+                     s_args.pc_key,
                      getRequestHandler(s_args.pc_host, 
                                        s_args.ui_rport,
                                        pf_filters,

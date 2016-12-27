@@ -18,9 +18,6 @@
 #include "global.h"
 #include "server.h"
 
-#define SVRCERT "snakeoil/snakeoil.pem"
-#define SVRKEY "snakeoil/snakeoil.key"
-
 X509* g_x509_server = NULL;
 EVP_PKEY* g_pkey_server = NULL;
 SSL_CTX *g_ssl_ctx = NULL;
@@ -29,11 +26,11 @@ STATIC volatile
 bool gb_error = false;
 
 STATIC
-bool loadCredentials() {
-  BIO* bio = BIO_new_file(SVRCERT, "r");
+bool loadCredentials(char* pc_cert, char* pc_key) {
+  BIO* bio = BIO_new_file(pc_cert, "r");
   if (!bio) {
     fprintf(stderr, "failed to open certificate\n");
-    return 1;
+    return false;
   }
   g_x509_server = PEM_read_bio_X509(bio, NULL, NULL, NULL);
   if (!g_x509_server) {
@@ -41,10 +38,10 @@ bool loadCredentials() {
   }
   BIO_free(bio);
 
-  bio = BIO_new_file(SVRKEY, "r");
+  bio = BIO_new_file(pc_key, "r");
   if (!bio) {
     fprintf(stderr, "failed to open key\n");
-    return 1;
+    return false;
   }
   g_pkey_server = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL);
   if (!g_pkey_server) {
@@ -173,12 +170,15 @@ void sig_handler(int signo) {
   }
 }
 
-int runServer(uint16_t ui_port, fRequestProcessor fClient) {
+int runServer(uint16_t ui_port,
+              char* pc_cert,
+              char* pc_key,
+              fRequestProcessor fClient) {
   g_fClient = fClient;
   SSL_load_error_strings();
   OpenSSL_add_ssl_algorithms();
 
-  if (!loadCredentials()) {
+  if (!loadCredentials(pc_cert, pc_key)) {
     cleanup();
     return 1;
   }
