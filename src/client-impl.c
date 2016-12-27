@@ -36,8 +36,6 @@ STATIC
 void* biobind(void* c) {
   struct SBioPair *ps_pair = (struct SBioPair*)c;
   
-  printf("processing request to bind bios\n");
-
   void* p_ctx[gs_filters];
   for (int i = 0; i < gs_filters; i++) {
     p_ctx[i] = gpf_filters[i]->fNewCtx(gpf_filters[i]->pMode);
@@ -50,14 +48,20 @@ void* biobind(void* c) {
 
     if(len > 0) {
       ps_pair->fb(ps_pair->b, buff, len);
+#ifdef DEBUG
       printf("%s: writing: ", ps_pair->id);
+#endif
       for (int i = 0; i < len; i++) {
+#ifdef DEBUG
         printf("%02X ", buff[i]);
+#endif
         for (int j = 0; j < gs_filters; j++) {
           gpf_filters[j]->fUpdate(p_ctx[j], buff[i]);
         }
       }
+#ifdef DEBUG
       printf("\n");
+#endif
     }
 
   } while (len > 0 || BIO_should_retry(ps_pair->a));

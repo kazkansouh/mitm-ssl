@@ -18,6 +18,7 @@ AC_PROG_CC
 PKG_CHECK_MODULES([ssl], [libcrypto >= 1.0.1 , libssl >= 1.0.1])
 
 # Checks for header files.
+AC_CHECK_HEADER([regex.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 

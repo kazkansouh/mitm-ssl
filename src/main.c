@@ -72,8 +72,8 @@ int main(int argc, char** argv) {
            s_args.ui_rport,
            s_args.ui_lport);
 
-    const Filter* pf_filters[1] = {
-      filter_string_new_Filter("Basic")
+    const Filter* pf_filters[] = {
+      filter_string_new_Filter("^Authorization:\\s\\+Basic\\s\\+[A-Za-z0-9/+=]\\+")
     };
 
     iret = runServer(s_args.ui_lport,
