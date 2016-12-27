@@ -14,10 +14,18 @@ if test $# -lt 2 ; then
 fi
 
 IFACE=$1
-HOST=$2
+shift
+HOST=$1
+shift
 CDIR=`ip -4 addr show ${IFACE} | grep -oP "(?<=inet )[\d\.]+/[\d]+(?= )"`
 MYIP=`echo ${CDIR} | grep -oP "\d+\.\d+\.\d+\.\d+"`
 FILTER=${HOST},${MYIP}
+
+while test $# -gt 0
+do
+    FILTER=${FILTER},${1}
+    shift
+done
 
 echo "Enabling IP Forwarding"
 echo 1 > /proc/sys/net/ipv4/ip_forward
