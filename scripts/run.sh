@@ -40,12 +40,14 @@ iptables -t nat -A ${IPTABLE_SPEC}
 
 handler() {
     if test ! -z "${PID}" ; then
-        echo "Cleaning up arpspoof"
-        kill ${PID}
-        while test -e "/proc/${PID}/"
-        do
-            sleep 1
-        done
+	if ps --pid "${PID}" > /dev/null ; then
+            echo "Cleaning up arpspoof"
+            kill ${PID}
+            while test -e "/proc/${PID}/"
+            do
+		sleep 1
+            done
+	fi
     fi
 }
 
@@ -57,13 +59,16 @@ do
     TMPFILE=`mktemp`
     nmap -sS -p139 -oG ${TMPFILE} ${CDIR} > /dev/null
 
+    echo awk -v filter=${FILTER} -v iface=${IFACE} -v host=${HOST} -f nmap.awk ${TMPFILE} 
     ARPSPOOF=`awk -v filter=${FILTER} -v iface=${IFACE} -v host=${HOST} -f nmap.awk ${TMPFILE}`
 
     rm ${TMPFILE}
 
     if test ! -z "${PID}" ; then
-        kill -9 ${PID}
-        PID=""
+	if ps --pid "${PID}" > /dev/null ; then
+	    kill -9 ${PID}
+            PID=""
+	fi
     fi
 
     echo ${ARPSPOOF}
