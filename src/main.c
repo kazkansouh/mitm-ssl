@@ -50,7 +50,7 @@ bool validateArgs(int argc,
         fprintf(stderr, "Error, invalid port specification\n");
         return false;
       }
-      s_args->ui_rport = port; 
+      s_args->ui_lport = port; 
     } else if (IS_ARG("--cert=")) {
       s_args->pc_certificate = argv[i] + strlen("--cert=");
     } else if (IS_ARG("--key=")) {
