@@ -32,7 +32,11 @@ END {
     for (ip in addresses) {
         result = result " -t " addresses[ip]
     }
-    if (filter != "" && iface != "" && host != "") {
-        print "arpspoof -i " iface result " " host
+    if (result == "") {
+        print "true"
+    } else {
+        if (filter != "" && iface != "" && host != "") {
+            print "arpspoof -i " iface result " " host
+        }
     }
 }
