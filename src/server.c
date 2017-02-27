@@ -139,6 +139,7 @@ STATIC
 void* request_handler(void* c) {
   int client = (intptr_t)c;
   printf("processing request from client: %d\n", client);
+  fflush(stdout);
 
   BIO* bssl = BIO_new_ssl(g_ssl_ctx, 0);
   SSL *ssl;

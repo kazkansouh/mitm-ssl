@@ -81,6 +81,7 @@ int main(int argc, char** argv) {
            s_args.pc_host,
            s_args.ui_rport,
            s_args.ui_lport);
+    fflush(stdout);
 
     const Filter* pf_filters[] = {
       filter_string_new_Filter("^Authorization:\\s\\+Basic\\s\\+[A-Za-z0-9/+=]\\+")

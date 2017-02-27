@@ -37,6 +37,7 @@ bool filter_string_filter(SFilterStringContext *ctx,
         putchar(*(ctx->pc_linebuf + i));
       }
       putchar('\n');
+      fflush(stdout);
     }
 
     ctx->ui_line_len = 0;
