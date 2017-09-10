@@ -79,7 +79,7 @@ void* biobind(void* c) {
 
 void requestProxy(BIO* client) {
 
-  const SSL_METHOD* method = SSLv3_method();
+  const SSL_METHOD* method = SSLv23_method();
   if (!method) {
     printerr("failed to create method");
     return;
