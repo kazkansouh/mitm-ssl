@@ -15,7 +15,7 @@ AX_PTHREAD
 AC_PROG_CC
 
 # Checks for libraries.
-PKG_CHECK_MODULES([ssl], [libcrypto >= 1.0.1 , libssl >= 1.0.1])
+PKG_CHECK_MODULES([ssl], [libssl >= 1.0.1 , libcrypto >= 1.0.1])
 
 # Checks for header files.
 AC_CHECK_HEADER([regex.h])
