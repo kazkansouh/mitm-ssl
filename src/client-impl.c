@@ -43,7 +43,7 @@ void* biobind(void* c) {
 
   int len = 0;
   do {
-    char buff[1024];
+    uint8_t buff[1024];
     len = ps_pair->fa(ps_pair->a, buff, sizeof(buff));
 
     if(len > 0) {
@@ -58,6 +58,9 @@ void* biobind(void* c) {
         for (int j = 0; j < gs_filters; j++) {
           gpf_filters[j]->fUpdate(p_ctx[j], buff[i]);
         }
+      }
+      for (int j = 0; j < gs_filters; j++) {
+        gpf_filters[j]->fCheck(p_ctx[j]);
       }
 #ifdef DEBUG
       printf("\n");
