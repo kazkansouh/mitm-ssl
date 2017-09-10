@@ -198,6 +198,7 @@ int runServer(uint16_t ui_port,
   sigfillset(&(act.sa_mask));
   act.sa_restorer = NULL;
   sigaction(SIGINT, &act, NULL); 
+  sigaction(SIGPIPE, &act, NULL);
 
   /* Handle connections */
   while(!gb_error) {
