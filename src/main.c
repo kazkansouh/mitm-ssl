@@ -84,7 +84,9 @@ int main(int argc, char** argv) {
     fflush(stdout);
 
     const Filter* pf_filters[] = {
-      filter_string_new_Filter("^Authorization:\\s\\+Basic\\s\\+[A-Za-z0-9/+=]\\+")
+      filter_string_new_Filter("^Authorization:\\s\\+Basic\\s\\+[A-Za-z0-9/+=]\\+"),
+      filter_string_new_Filter("username=[A-Za-z0-9_\\-\\.%]\\+"),
+      filter_string_new_Filter("credential=[A-Za-z0-9_\\-\\.%]\\+")
     };
 
     iret = runServer(s_args.ui_lport,
