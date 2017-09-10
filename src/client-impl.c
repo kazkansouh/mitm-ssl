@@ -154,14 +154,14 @@ void requestProxy(BIO* client) {
 
     SSL_CTX_free(ctx);
     BIO_free_all(web);
-    printerr("failed to set do_connect");
+    printerr("failed to do_connect");
     return;
   }
 
   if (BIO_do_handshake(web) != 1) {
     SSL_CTX_free(ctx);
     BIO_free_all(web);    
-    printerr("failed to set do_handshake");
+    printerr("failed to do_handshake");
     return;
   }
 
