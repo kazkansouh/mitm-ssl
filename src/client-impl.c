@@ -32,6 +32,40 @@ uint16_t       gui_port = 443;
 const Filter** gpf_filters = NULL;
 size_t         gs_filters = 0;
 
+#ifdef DEBUG
+STATIC
+void dump(const void* data, size_t size) {
+  char ascii[17];
+  size_t i, j;
+  ascii[16] = '\0';
+  for (i = 0; i < size; ++i) {
+    printf("%02X ", ((unsigned char*)data)[i]);
+    if (((unsigned char*)data)[i] >= ' ' && ((unsigned char*)data)[i] <= '~') {
+      ascii[i % 16] = ((unsigned char*)data)[i];
+    } else {
+      ascii[i % 16] = '.';
+    }
+    if ((i+1) % 8 == 0 || i+1 == size) {
+      printf(" ");
+      if ((i+1) % 16 == 0) {
+	printf("|  %s \n", ascii);
+      } else if (i+1 == size) {
+	ascii[(i+1) % 16] = '\0';
+	if ((i+1) % 16 <= 8) {
+	  printf(" ");
+	}
+	for (j = (i+1) % 16; j < 16; ++j) {
+	  printf("   ");
+	}
+	printf("|  %s \n", ascii);
+      }
+    }
+  }
+}
+#else
+#define dump(...)
+#endif
+
 STATIC
 void* biobind(void* c) {
   struct SBioPair *ps_pair = (struct SBioPair*)c;
@@ -49,12 +83,10 @@ void* biobind(void* c) {
     if(len > 0) {
       ps_pair->fb(ps_pair->b, buff, len);
 #ifdef DEBUG
-      printf("%s: writing: ", ps_pair->id);
+      printf("%s: writing:\n", ps_pair->id);
+      dump(buff, len);
 #endif
       for (int i = 0; i < len; i++) {
-#ifdef DEBUG
-        printf("%02X ", buff[i]);
-#endif
         for (int j = 0; j < gs_filters; j++) {
           gpf_filters[j]->fUpdate(p_ctx[j], buff[i]);
         }
