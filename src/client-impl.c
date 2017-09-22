@@ -27,10 +27,12 @@ struct SBioPair {
   fwriter fb;
 };
 
-const char*    gpc_host = "localhost";
-uint16_t       gui_port = 443;
-const Filter** gpf_filters = NULL;
-size_t         gs_filters = 0;
+const char*     gpc_host = "localhost";
+uint16_t        gui_port = 443;
+const Filter**  gpf_filters = NULL;
+size_t          gs_filters = 0;
+const Mutator** gpm_mutators = NULL;
+size_t          gs_mutators = 0;
 
 #ifdef DEBUG
 STATIC
@@ -70,9 +72,14 @@ STATIC
 void* biobind(void* c) {
   struct SBioPair *ps_pair = (struct SBioPair*)c;
   
-  void* p_ctx[gs_filters];
+  void* pf_ctx[gs_filters];
   for (int i = 0; i < gs_filters; i++) {
-    p_ctx[i] = gpf_filters[i]->fNewCtx(gpf_filters[i]->pMode);
+    pf_ctx[i] = gpf_filters[i]->fNewCtx(gpf_filters[i]->pMode);
+  }
+
+  void* pm_ctx[gs_mutators];
+  for (int i = 0; i < gs_mutators; i++) {
+    pm_ctx[i] = gpm_mutators[i]->fNewCtx(gpm_mutators[i]->pMode);
   }
 
   int len = 0;
@@ -81,6 +88,10 @@ void* biobind(void* c) {
     len = ps_pair->fa(ps_pair->a, buff, sizeof(buff));
 
     if(len > 0) {
+      for (int j = 0; j < gs_mutators; j++) {
+        gpm_mutators[j]->fPerform(pm_ctx[j], buff, len);
+      }
+
       ps_pair->fb(ps_pair->b, buff, len);
 #ifdef DEBUG
       printf("%s: writing:\n", ps_pair->id);
@@ -88,11 +99,11 @@ void* biobind(void* c) {
 #endif
       for (int i = 0; i < len; i++) {
         for (int j = 0; j < gs_filters; j++) {
-          gpf_filters[j]->fUpdate(p_ctx[j], buff[i]);
+          gpf_filters[j]->fUpdate(pf_ctx[j], buff[i]);
         }
       }
       for (int j = 0; j < gs_filters; j++) {
-        gpf_filters[j]->fCheck(p_ctx[j]);
+        gpf_filters[j]->fCheck(pf_ctx[j]);
       }
 #ifdef DEBUG
       printf("\n");
@@ -106,7 +117,11 @@ void* biobind(void* c) {
   }
 
   for (int i = 0; i < gs_filters; i++) {
-    gpf_filters[i]->fFreeCtx(p_ctx[i]);
+    gpf_filters[i]->fFreeCtx(pf_ctx[i]);
+  }
+
+  for (int i = 0; i < gs_mutators; i++) {
+    gpm_mutators[i]->fFreeCtx(pm_ctx[i]);
   }
 
   pthread_exit(0);
@@ -242,10 +257,14 @@ void requestProxy(BIO* client) {
 fRequestProcessor getRequestHandler(const char* const pc_host, 
                                     const uint16_t ui_port,
                                     const Filter** const pf_filters,
-                                    const size_t s_filters) {
+                                    const size_t s_filters,
+                                    const Mutator** const pm_mutators,
+                                    const size_t s_mutators) {
   gpc_host = pc_host;
   gui_port = ui_port;
   gpf_filters = pf_filters;
   gs_filters = s_filters;
+  gpm_mutators = pm_mutators;
+  gs_mutators = s_mutators;
   return requestProxy;
 }

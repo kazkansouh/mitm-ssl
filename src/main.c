@@ -9,6 +9,7 @@
 #include "server.h"
 #include "client-impl.h"
 #include "filter-string.h"
+#include "mutator-string.h"
 
 #define IS_ARG(arg)                             \
   ((strncmp(arg, argv[i], strlen(arg)) == 0) && \
@@ -89,16 +90,27 @@ int main(int argc, char** argv) {
       filter_string_new_Filter("credential=[A-Za-z0-9_\\-\\.%]\\+")
     };
 
+    const Mutator* pm_mutators[] = {
+      mutator_string_new_Mutator((const uint8_t*)"encfunc='",9,
+                                 (const uint8_t*)"0",(const uint8_t*)"1",1)
+    };
+
     iret = runServer(s_args.ui_lport,
                      s_args.pc_certificate,
                      s_args.pc_key,
                      getRequestHandler(s_args.pc_host, 
                                        s_args.ui_rport,
                                        pf_filters,
-                                       sizeof(pf_filters)/sizeof(Filter*)));
+                                       sizeof(pf_filters)/sizeof(Filter*),
+                                       pm_mutators,
+                                       sizeof(pm_mutators)/sizeof(Mutator*)));
 
     for (int i = 0; i < sizeof(pf_filters)/sizeof(Filter*); i++) {
       pf_filters[i]->fFree((void*)pf_filters[i]);
+    }
+
+    for (int i = 0; i < sizeof(pm_mutators)/sizeof(Mutator*); i++) {
+      pm_mutators[i]->fFree((void*)pm_mutators[i]);
     }
   }
 

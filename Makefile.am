@@ -5,7 +5,8 @@ mitm_ssl_SOURCES = \
 	src/main.c\
 	src/server.c\
 	src/client-impl.c\
-	src/filter-string.c
+	src/filter-string.c\
+	src/mutator-string.c
 
 mitm_ssl_CFLAGS = \
 	${ssl_CLAGS}\
