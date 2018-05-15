@@ -19,12 +19,15 @@ typedef int (*freader)(BIO*, void *, int);
 typedef void (*ffree)(BIO*); 
 
 struct SBioPair {
-  const char* id;
-  BIO *a;
-  freader fa;
-  ffree free;
-  BIO *b;
-  fwriter fb;
+  const char* const id;
+  BIO* const a;
+  const freader fa;
+  const ffree free;
+  BIO* const b;
+  const fwriter fb;
+  uint64_t* const ctr;
+  pthread_mutex_t* const mx_ctr;
+  const uint32_t connid;
 };
 
 const char*     gpc_host = "localhost";
@@ -33,6 +36,10 @@ const Filter**  gpf_filters = NULL;
 size_t          gs_filters = 0;
 const Mutator** gpm_mutators = NULL;
 size_t          gs_mutators = 0;
+STATIC
+uint32_t        gui_connid = 0;
+STATIC
+pthread_mutex_t gmx_connid = PTHREAD_MUTEX_INITIALIZER;
 
 #ifdef DEBUG
 STATIC
@@ -69,6 +76,24 @@ void dump(const void* data, size_t size) {
 #endif
 
 STATIC
+void save(uint32_t connid, uint64_t pkt, const char* id, uint8_t* buff, size_t len) {
+  char fname[35];
+  FILE *f = NULL;
+  snprintf(fname, sizeof(fname), "%03u-%06lu-%s.dmp", connid, pkt, id);
+  printf("PKT: %s\n", fname);
+  f = fopen(fname, "w");
+  if (f != NULL) {
+    if (fwrite(buff, len, 1, f) != 1) {
+      printerr("failed to write packet to file\n");
+    }
+    fclose(f);
+  } else {
+    printerr("failed to open file to save packet\n");
+  }
+}
+
+
+STATIC
 void* biobind(void* c) {
   struct SBioPair *ps_pair = (struct SBioPair*)c;
   
@@ -85,6 +110,7 @@ void* biobind(void* c) {
   int len = 0;
   do {
     uint8_t buff[1024];
+    uint64_t ui_pkt;
     len = ps_pair->fa(ps_pair->a, buff, sizeof(buff));
 
     if(len > 0) {
@@ -97,6 +123,16 @@ void* biobind(void* c) {
       printf("%s: writing:\n", ps_pair->id);
       dump(buff, len);
 #endif
+      pthread_mutex_lock(ps_pair->mx_ctr);
+      ui_pkt = (*(ps_pair->ctr))++;
+      pthread_mutex_unlock(ps_pair->mx_ctr);
+
+      if (true) {
+	/* TODO: move into a thread, needs the buffer to be
+	   malloc'ed */
+	save(ps_pair->connid, ui_pkt, ps_pair->id, buff, len);
+      }
+
       for (int i = 0; i < len; i++) {
         for (int j = 0; j < gs_filters; j++) {
           gpf_filters[j]->fUpdate(pf_ctx[j], buff[i]);
@@ -128,8 +164,15 @@ void* biobind(void* c) {
 }
 
 void requestProxy(BIO* client) {
-
+  uint32_t ui_connid;
   const SSL_METHOD* method = SSLv23_method();
+  uint64_t ui_pkt_ctr = 0;
+  pthread_mutex_t mx_pkt_ctr;
+
+  pthread_mutex_lock(&gmx_connid);
+  ui_connid = gui_connid++;
+  pthread_mutex_unlock(&gmx_connid);
+
   if (!method) {
     printerr("failed to create method");
     return;
@@ -215,18 +258,26 @@ void requestProxy(BIO* client) {
     return;
   }
 
+  pthread_mutex_init(&mx_pkt_ctr, NULL);
+
   struct SBioPair s_ab = { "ctos" 
                            , client
                            , BIO_read 
                            , BIO_ssl_shutdown
                            , web
-                           , BIO_write };
+                           , BIO_write
+			   , &ui_pkt_ctr
+			   , &mx_pkt_ctr
+			   , ui_connid };
   struct SBioPair s_ba = { "stoc" 
                            , web
                            , BIO_read
                            , BIO_ssl_shutdown
                            , client
-                           , BIO_write };
+                           , BIO_write
+			   , &ui_pkt_ctr
+			   , &mx_pkt_ctr
+			   , ui_connid };
 
   pthread_t pt_ab;
   pthread_t pt_ba;
@@ -245,6 +296,8 @@ void requestProxy(BIO* client) {
       }
     }
   }
+
+  pthread_mutex_destroy(&mx_pkt_ctr);
 
   if(web)
     BIO_free_all(web);
