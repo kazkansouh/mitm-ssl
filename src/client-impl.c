@@ -31,7 +31,7 @@ struct SBioPair {
 };
 
 const char*     gpc_host = "localhost";
-uint16_t        gui_port = 443;
+const char*     gpc_port = "443";
 const Filter**  gpf_filters = NULL;
 size_t          gs_filters = 0;
 const Mutator** gpm_mutators = NULL;
@@ -209,7 +209,7 @@ void requestProxy(BIO* client) {
     return;
   }
 
-  if (BIO_set_conn_int_port(web, &gui_port) != 1) {
+  if (BIO_set_conn_port(web, gpc_port) != 1) {
     SSL_CTX_free(ctx);
     BIO_free(web);
     printerr("failed to set port");
@@ -308,13 +308,13 @@ void requestProxy(BIO* client) {
 
 
 fRequestProcessor getRequestHandler(const char* const pc_host, 
-                                    const uint16_t ui_port,
+                                    const char* const pc_port,
                                     const Filter** const pf_filters,
                                     const size_t s_filters,
                                     const Mutator** const pm_mutators,
                                     const size_t s_mutators) {
   gpc_host = pc_host;
-  gui_port = ui_port;
+  gpc_port = pc_port;
   gpf_filters = pf_filters;
   gs_filters = s_filters;
   gpm_mutators = pm_mutators;

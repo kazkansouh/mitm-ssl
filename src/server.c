@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
+#include <string.h>
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -12,6 +13,7 @@
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/bio.h>
 
 #include <pthread.h>
 

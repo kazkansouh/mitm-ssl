@@ -17,7 +17,7 @@
 
 typedef struct {
   char* pc_host;
-  uint16_t ui_rport;
+  char* pc_rport;
   uint16_t ui_lport;
   char* pc_certificate;
   char* pc_key;
@@ -38,12 +38,11 @@ bool validateArgs(int argc,
       b_hostset = true;
     } else if (IS_ARG("--rport=")) {
       char *pchend = NULL;
-      double port = strtod(argv[i] + strlen("--rport="), &pchend);
-      if (*pchend != '\0') {
+      if (strtod(argv[i] + strlen("--rport="), &pchend) <= 0 || *pchend != '\0') {
         fprintf(stderr, "Error, invalid port specification\n");
         return false;
       }
-      s_args->ui_rport = port; 
+      s_args->pc_rport = argv[i] + strlen("--rport=");
     } else if (IS_ARG("--lport=")) {
       char *pchend = NULL;
       double port = strtod(argv[i] + strlen("--lport="), &pchend);
@@ -51,7 +50,7 @@ bool validateArgs(int argc,
         fprintf(stderr, "Error, invalid port specification\n");
         return false;
       }
-      s_args->ui_lport = port; 
+      s_args->ui_lport = port;
     } else if (IS_ARG("--cert=")) {
       s_args->pc_certificate = argv[i] + strlen("--cert=");
     } else if (IS_ARG("--key=")) {
@@ -69,7 +68,7 @@ int main(int argc, char** argv) {
   int iret = 1;
 
   SArguments s_args = { "localhost" ,
-                        4433 ,
+                        "4433" ,
                         4443 ,
                         "snakeoil/snakeoil.pem" ,
                         "snakeoil/snakeoil.key" };
@@ -77,10 +76,10 @@ int main(int argc, char** argv) {
     printUsage(argc, argv);
   } else {
     printf("Using configuration:\n"
-           "\tServer: %s:%d\n"
+           "\tServer: %s:%s\n"
            "\tListen port: %d\n",
            s_args.pc_host,
-           s_args.ui_rport,
+           s_args.pc_rport,
            s_args.ui_lport);
     fflush(stdout);
 
@@ -98,8 +97,8 @@ int main(int argc, char** argv) {
     iret = runServer(s_args.ui_lport,
                      s_args.pc_certificate,
                      s_args.pc_key,
-                     getRequestHandler(s_args.pc_host, 
-                                       s_args.ui_rport,
+                     getRequestHandler(s_args.pc_host,
+                                       s_args.pc_rport,
                                        pf_filters,
                                        sizeof(pf_filters)/sizeof(Filter*),
                                        pm_mutators,
