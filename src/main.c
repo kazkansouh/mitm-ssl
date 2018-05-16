@@ -89,9 +89,12 @@ int main(int argc, char** argv) {
       filter_string_new_Filter("credential=[A-Za-z0-9_\\-\\.%]\\+")
     };
 
+    // the below will replace chromes encoding header
     const Mutator* pm_mutators[] = {
-      mutator_string_new_Mutator((const uint8_t*)"encfunc='",9,
-                                 (const uint8_t*)"0",(const uint8_t*)"1",1)
+      mutator_string_new_Mutator((const uint8_t*)"Accept-Encoding: ",17,
+                                 (const uint8_t*)"gzip, deflate, br",
+				 (const uint8_t*)"identity         ",
+				 17)
     };
 
     iret = runServer(s_args.ui_lport,
